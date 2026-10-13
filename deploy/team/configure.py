@@ -127,11 +127,17 @@ def main():
     parser.add_argument('--auth-file', type=Path, required=True)
     parser.add_argument('--task-cents', type=int)
     parser.add_argument('--daily-cents', type=int)
+    parser.add_argument('--deployment-root', type=Path,
+        help='Optional Ubuntu deployment root; initialize managed memory using the existing broker profile')
     args = parser.parse_args()
     auth = json.loads(args.auth_file.read_text())
     api = Api(args.base, auth['boardApiToken'])
     api.request('GET', '/cli-auth/me')  # Real authenticated owner authorization required.
     result = configure(api, args.company, Path(__file__).parent, args.task_cents, args.daily_cents)
+    if args.deployment_root:
+        from bootstrap_memory import bootstrap_memory
+        bootstrap_memory(args.deployment_root, args.company,
+            api.request('GET', '/companies/' + args.company + '/agents'))
     print(json.dumps({'agents': result}, indent=2))
 
 

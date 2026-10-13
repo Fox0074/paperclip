@@ -11,7 +11,7 @@
       "limits": {
         "monthlyCents": 700,
         "dailyCents": 70,
-        "taskCents": 35,
+        "taskCents": 100,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -26,7 +26,7 @@
       "limits": {
         "monthlyCents": 600,
         "dailyCents": 60,
-        "taskCents": 30,
+        "taskCents": 100,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -41,7 +41,7 @@
       "limits": {
         "monthlyCents": 600,
         "dailyCents": 60,
-        "taskCents": 30,
+        "taskCents": 100,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -56,7 +56,7 @@
       "limits": {
         "monthlyCents": 300,
         "dailyCents": 30,
-        "taskCents": 15,
+        "taskCents": 50,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -71,7 +71,7 @@
       "limits": {
         "monthlyCents": 400,
         "dailyCents": 40,
-        "taskCents": 20,
+        "taskCents": 50,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -86,7 +86,7 @@
       "limits": {
         "monthlyCents": 300,
         "dailyCents": 30,
-        "taskCents": 15,
+        "taskCents": 30,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -101,7 +101,7 @@
       "limits": {
         "monthlyCents": 500,
         "dailyCents": 50,
-        "taskCents": 25,
+        "taskCents": 50,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -116,7 +116,7 @@
       "limits": {
         "monthlyCents": 700,
         "dailyCents": 70,
-        "taskCents": 35,
+        "taskCents": 100,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -131,7 +131,7 @@
       "limits": {
         "monthlyCents": 400,
         "dailyCents": 40,
-        "taskCents": 20,
+        "taskCents": 70,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -146,7 +146,7 @@
       "limits": {
         "monthlyCents": 200,
         "dailyCents": 25,
-        "taskCents": 10,
+        "taskCents": 30,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -161,7 +161,7 @@
       "limits": {
         "monthlyCents": 200,
         "dailyCents": 25,
-        "taskCents": 10,
+        "taskCents": 30,
         "maxRetries": 2,
         "timeoutSec": 900
       }
@@ -176,7 +176,7 @@
       "limits": {
         "monthlyCents": 100,
         "dailyCents": 25,
-        "taskCents": 10,
+        "taskCents": 30,
         "maxRetries": 2,
         "timeoutSec": 900
       }

@@ -37,9 +37,9 @@ def main():
         description += '\n\n## Agent IDs for actual API assignments\n' + '\n'.join(
             f"- {key}: {agent['id']}" for key, agent in team.items())
         issue = api.request('POST', '/companies/' + args.company + '/issues', {
-            'title': 'TEAM-VALIDATION: isolated commercial-to-code handoff',
+            'title': 'TEAM-TREE: isolated commercial-to-code handoff',
             'description': description, 'status': 'todo', 'priority': 'medium',
-            'assigneeAgentId': team['CEO']['id'], 'idempotencyKey': 'ai-hack-team-validation-v1'})
+            'assigneeAgentId': team['CEO']['id'], 'idempotencyKey': 'team-tree-ceo'})
         print(json.dumps({'testIssueId': issue['id'], 'identifier': issue['identifier']}))
 
 
