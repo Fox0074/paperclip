@@ -1,4 +1,5 @@
 import importlib.util
+import argparse
 import json
 from pathlib import Path, PurePosixPath
 import tempfile
@@ -52,6 +53,10 @@ class InstallationBoundaries(unittest.TestCase):
         self.assertNotIn("privileged", text)
         self.assertNotIn("runtime-key", text)
         self.assertEqual(service["environment"]["PAPERCLIP_DEPLOYMENT_MODE"], "authenticated")
+        self.assertEqual(service["environment"]["PAPERCLIP_AUTH_PUBLIC_BASE_URL"], "http://127.0.0.1:13100")
+        self.assertEqual(service["environment"]["BETTER_AUTH_URL"], "http://127.0.0.1:13100")
+        self.assertEqual(service["environment"]["BETTER_AUTH_TRUSTED_ORIGINS"], "http://127.0.0.1:13100")
+        self.assertEqual(service["environment"]["PAPERCLIP_AGENT_JWT_SECRET"], "${PAPERCLIP_AGENT_JWT_SECRET}")
         self.assertIn("/run/paperclip-test-provisioner:/run/paperclip-provisioner", service["volumes"])
 
     def test_service_can_write_only_its_managed_homes_and_keeps_socket_directory(self):
@@ -90,6 +95,33 @@ class InstallationBoundaries(unittest.TestCase):
                 self.assertEqual(env.read_text(), auth)
                 self.assertTrue(json.loads(native.read_text())["telemetry"]["enabled"])
                 self.assertEqual(key.read_text(), "existing runtime key")
+
+    def test_configure_keeps_an_existing_owner_budget(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {"configuredCompanies": []}
+            args = argparse.Namespace(company=None, input_rate=1, output_rate=2, budget_usd=50)
+            responses = [json.dumps([{"id": "company", "name": "Test", "budget_monthly_cents": 4200}]),
+                         json.dumps({"status": "pass"})]
+            with patch.object(installer, "node", side_effect=responses) as node, \
+                 patch.object(installer, "run"), patch("builtins.print"):
+                installer.configure(root, manifest, args)
+            self.assertEqual(node.call_count, 2)
+            self.assertTrue(all("companyService" not in call.args[1] for call in node.call_args_list))
+            self.assertEqual(manifest["configuredCompanies"], ["company"])
+
+    def test_repeat_keeps_an_explicit_unlimited_budget_instead_of_resetting_it(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {"configuredCompanies": ["company"]}
+            args = argparse.Namespace(company=None, input_rate=1, output_rate=2, budget_usd=999)
+            responses = [json.dumps([{"id": "company", "name": "Test", "budget_monthly_cents": 0}]),
+                         json.dumps({"status": "pass"})]
+            with patch.object(installer, "node", side_effect=responses) as node, \
+                 patch.object(installer, "run"), patch("builtins.print"):
+                installer.configure(root, manifest, args)
+            self.assertEqual(node.call_count, 2)
+            self.assertFalse((root / installer.MARKER).exists())
 
 
 if __name__ == "__main__":

@@ -61,9 +61,13 @@ def compose_config(root, host, port, image):
             "HOST": "0.0.0.0", "PORT": "3100", "SERVE_UI": "true",
             "PAPERCLIP_TELEMETRY_DISABLED": "1", "PAPERCLIP_HOME": "/paperclip",
             "PAPERCLIP_DEPLOYMENT_MODE": "authenticated", "PAPERCLIP_DEPLOYMENT_EXPOSURE": "private",
-            "PAPERCLIP_PUBLIC_URL": f"http://{host}:{port}", "PAPERCLIP_ALLOWED_HOSTNAMES": host,
+            "PAPERCLIP_PUBLIC_URL": f"http://{host}:{port}",
+            "PAPERCLIP_AUTH_PUBLIC_BASE_URL": f"http://{host}:{port}",
+            "BETTER_AUTH_URL": f"http://{host}:{port}",
+            "BETTER_AUTH_TRUSTED_ORIGINS": f"http://{host}:{port}", "PAPERCLIP_ALLOWED_HOSTNAMES": host,
             "PAPERCLIP_EXECUTION_PRESETS_FILE": "/integration/presets.json",
-            "BETTER_AUTH_SECRET": "${BETTER_AUTH_SECRET}"},
+            "BETTER_AUTH_SECRET": "${BETTER_AUTH_SECRET}",
+            "PAPERCLIP_AGENT_JWT_SECRET": "${PAPERCLIP_AGENT_JWT_SECRET}"},
         "volumes": [f"{root}/data:/paperclip", f"{root}/workspace:/workspace",
                     f"{root}/integration/presets.json:/integration/presets.json:ro",
                     f"/run/{name}-provisioner:/run/paperclip-provisioner"]}}}
@@ -123,7 +127,8 @@ def initialize(root, host, port):
         os.chown(path, 1000, 1000)
     env = root / ".env"
     if not env.exists():
-        env.write_text("BETTER_AUTH_SECRET=" + secrets.token_hex(32) + "\n")
+        env.write_text("BETTER_AUTH_SECRET=" + secrets.token_hex(32) + "\n"
+                       + "PAPERCLIP_AGENT_JWT_SECRET=" + secrets.token_hex(32) + "\n")
         env.chmod(0o600)
     if not (root / "integration/runtime-key").exists():
         run("ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", root / "integration/runtime-key")
