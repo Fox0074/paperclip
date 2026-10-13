@@ -12,6 +12,11 @@ spec.loader.exec_module(installer)
 
 
 class InstallationBoundaries(unittest.TestCase):
+    def test_native_setup_commands_use_the_application_user(self):
+        with patch.object(installer, "run", return_value="{}") as run:
+            installer.node(PurePosixPath("/opt/paperclip-test"), "synthetic script")
+        self.assertEqual(run.call_args.args[:6], ("docker", "exec", "-u", "node", "-i", "paperclip-test"))
+
     def test_existing_unmanaged_data_is_never_claimed(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
