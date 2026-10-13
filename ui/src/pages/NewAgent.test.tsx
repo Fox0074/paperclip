@@ -130,11 +130,12 @@ async function fill(label: string, value: string) {
     input.dispatchEvent(new Event("input", { bubbles: true }));
   });
 }
-async function render(adapter = "pi_local", runnerProvider = "codex") {
+async function render(adapter = "pi_local", runnerProvider = "codex", extra: Record<string, string> = {}) {
   state.params = new URLSearchParams({
     name: "Atlas",
     adapterType: adapter,
     runnerProvider,
+    ...extra,
   });
   await act(async () =>
     root.render(
@@ -204,6 +205,18 @@ afterEach(async () => {
   container.remove();
 });
 describe("New agent setup", () => {
+  it("preserves the onboarding role and selected company preset without requesting another key", async () => {
+    api.executionPresets.mockResolvedValue([{ id: "codex-sale", label: "codex.sale", adapterType: "opencode_local",
+      defaultModel: "codex_sale/gpt-6.1-sol", models: [{ id: "codex_sale/gpt-6.1-sol", label: "gpt-6.1-sol" }] }]);
+    await render("opencode_local", "codex", { executionPresetId: "codex-sale", role: "cto" });
+    expect((container.querySelector('[aria-label="Provider setup"]') as HTMLSelectElement).value).toBe("codex-sale");
+    expect(container.querySelector<HTMLInputElement>('[aria-label="Model"]')!.value).toBe("codex_sale/gpt-6.1-sol");
+    expect(container.textContent).not.toContain("Connect another account");
+    await click("Finish setup");
+    expect(api.create).toHaveBeenCalledWith("company-1", expect.objectContaining({ role: "cto", executionPresetId: "codex-sale" }));
+    expect(secrets.create).not.toHaveBeenCalled();
+  });
+
   it("creates a configured provider agent without OpenRouter, raw keys, or a reused environment", async () => {
     api.executionPresets.mockResolvedValue([{ id: "codex-sale", label: "codex.sale", adapterType: "opencode_local",
       defaultModel: "codex_sale/gpt-6.1-sol", models: [{ id: "codex_sale/gpt-6.1-sol", label: "gpt-6.1-sol" }] }]);

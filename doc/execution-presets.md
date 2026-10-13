@@ -1,6 +1,6 @@
 # Configured execution presets
 
-Self-hosted operators can offer a configured OpenCode provider in **Agents → New agent → OpenCode → Provider setup**. The user selects a preset and a model. The wizard uses the existing company credential. It does not request an OpenRouter account or copy an API key into browser state.
+Self-hosted operators can offer a configured OpenCode provider in **Agents → New agent → OpenCode → Provider setup**. The user selects a preset and a model. The first-agent onboarding screen also lists configured presets and opens this same form, preserving the company, agent name and role. The wizard uses the existing company credential. It does not request an OpenRouter account or copy an API key into browser state.
 
 Each created agent gets its own SSH environment, container, home, OpenCode configuration, and host key. The standard agent create route still checks company access, board permissions, hire approval policy, skill assignments, instruction permissions, and budgets. Presets do not bypass pending-hire approval. If company policy requires approval, direct preset creation returns the standard approval-required error.
 

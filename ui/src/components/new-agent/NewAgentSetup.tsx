@@ -21,7 +21,7 @@ import type {
   Agent,
   EnvBinding,
 } from "@paperclipai/shared";
-import { ADAPTER_AUTH_MISSING_CHECK_CODE } from "@paperclipai/shared";
+import { AGENT_ROLES, ADAPTER_AUTH_MISSING_CHECK_CODE } from "@paperclipai/shared";
 import { useNavigate, useSearchParams } from "@/lib/router";
 import { agentsApi } from "@/api/agents";
 import { adaptersApi } from "@/api/adapters";
@@ -88,6 +88,8 @@ export function NewAgentSetup() {
       adapterType={params.get("adapterType") ?? ""}
       runnerProvider={params.get("runnerProvider") ?? "codex"}
       createdAgentId={params.get("createdAgentId")}
+      initialPresetId={params.get("executionPresetId") ?? ""}
+      initialRole={params.get("role") ?? ""}
     />
   );
 }
@@ -98,12 +100,16 @@ function Setup({
   adapterType,
   runnerProvider,
   createdAgentId,
+  initialPresetId,
+  initialRole,
 }: {
   companyId: string;
   name: string;
   adapterType: string;
   runnerProvider: string;
   createdAgentId: string | null;
+  initialPresetId: string;
+  initialRole: string;
 }) {
   const navigate = useNavigate();
   const cache = useQueryClient();
@@ -153,7 +159,7 @@ function Setup({
       : undefined,
   );
   const [connection, setConnection] = useState<ProviderConnection | null>(null);
-  const [executionPresetId, setExecutionPresetId] = useState("");
+  const [executionPresetId, setExecutionPresetId] = useState(initialPresetId);
   const executionPresets = useQuery({
     queryKey: ["execution-presets", companyId],
     queryFn: () => agentsApi.executionPresets(companyId),
@@ -161,6 +167,9 @@ function Setup({
     retry: false,
   });
   const executionPreset = executionPresets.data?.find(preset => preset.id === executionPresetId);
+  useEffect(() => {
+    if (executionPreset && !model) setModel(executionPreset.defaultModel);
+  }, [executionPreset, model]);
   const aiBinding = executionPreset ? undefined : runtimeAiBinding ?? connection?.aiConnection;
   const [repository, setRepository] = useState("");
   const [branch, setBranch] = useState("");
@@ -517,7 +526,7 @@ function Setup({
       const createData = {
         name: name.trim(),
         appearance: appearanceDraft.appearance,
-        role: existing.length ? "general" : "ceo",
+        role: (AGENT_ROLES as readonly string[]).includes(initialRole) ? initialRole : existing.length ? "general" : "ceo",
         ...(leader ? { reportsTo: leader.id } : {}),
         adapterType,
         adapterConfig: config,

@@ -8,6 +8,7 @@ COPY --chown=node:node packages/shared/src/types/index.ts packages/shared/src/ty
 COPY --chown=node:node packages/shared/src/validators/agent.ts /app/packages/shared/src/validators/agent.ts
 COPY --chown=node:node server/src/routes/agents.ts /app/server/src/routes/agents.ts
 COPY --chown=node:node server/src/services/execution-presets.ts /app/server/src/services/execution-presets.ts
+COPY --chown=node:node ui/src/components/OnboardingWizard.tsx /app/ui/src/components/OnboardingWizard.tsx
 COPY --chown=node:node ui/src/api/agents.ts /app/ui/src/api/agents.ts
 COPY --chown=node:node ui/src/components/new-agent/NewAgentSetup.tsx /app/ui/src/components/new-agent/NewAgentSetup.tsx
 RUN pnpm --filter @paperclipai/shared build \

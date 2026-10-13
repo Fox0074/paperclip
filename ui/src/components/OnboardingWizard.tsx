@@ -933,6 +933,12 @@ function OnboardingWizardInner({
     // Models are picked on step 4 (Connect a model).
     enabled: Boolean(createdCompanyId) && effectiveOnboardingOpen && step === 4
   });
+  const configuredPresets = useQuery({
+    queryKey: ["execution-presets", createdCompanyId],
+    queryFn: () => agentsApi.executionPresets(createdCompanyId!),
+    enabled: Boolean(createdCompanyId) && effectiveOnboardingOpen && step === 4,
+    retry: false,
+  });
   const getCapabilities = useAdapterCapabilities();
   const adapterCaps = getCapabilities(adapterType);
 
@@ -2670,6 +2676,24 @@ function OnboardingWizardInner({
 
                         Picking one starts the sign-in now. The row is the
                         question, and answering it is what opens the card. */}
+                    {(configuredPresets.data ?? []).map(preset => (
+                      <Button key={preset.id} type="button" variant="outline" className="mb-4 w-full"
+                        onClick={() => {
+                          const prefix = createdCompanyPrefix ?? companies.find(company => company.id === createdCompanyId)?.issuePrefix;
+                          if (!createdCompanyId || !prefix) return;
+                          const query = new URLSearchParams({ name: agentName, role: agentRole,
+                            adapterType: preset.adapterType, executionPresetId: preset.id });
+                          setSelectedCompanyId(createdCompanyId);
+                          handleClose();
+                          navigate(`/${prefix}/agents/new?${query}`);
+                        }}>
+                        {preset.label}
+                      </Button>
+                    ))}
+                    {configuredPresets.isError && <p role="alert" className="mb-4 text-sm text-destructive">
+                      Could not load configured providers. <Button type="button" variant="ghost"
+                        onClick={() => void configuredPresets.refetch()}>Retry</Button>
+                    </p>}
                     <ModelSourceTiles
                       label="Model source"
                       sources={recommendedAdapters.map((opt) => ({
