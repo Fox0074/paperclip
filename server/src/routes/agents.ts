@@ -5446,6 +5446,15 @@ export function agentRoutes(
     }
 
     const patchData = { ...(req.body as Record<string, unknown>) };
+    if (req.actor.type === "agent" && (
+      hasOwn(patchData, "budgetMonthlyCents") ||
+      (hasOwn(patchData, "runtimeConfig") && (
+        hasOwn(asRecord(existing.runtimeConfig) ?? {}, "resourceLimits") ||
+        hasOwn(asRecord(patchData.runtimeConfig) ?? {}, "resourceLimits")
+      ))
+    )) {
+      throw forbidden("Only the owner can change agent spending limits and governed runtime configuration");
+    }
     const replaceAdapterConfig = patchData.replaceAdapterConfig === true;
     delete patchData.replaceAdapterConfig;
     // The apply-existing flag is not an agent column. The server binds the fixed

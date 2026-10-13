@@ -595,6 +595,11 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
   const runtimeConfig = !isCreate ? ((props.agent.runtimeConfig ?? {}) as Record<string, unknown>) : {};
   const heartbeat = !isCreate ? ((runtimeConfig.heartbeat ?? {}) as Record<string, unknown>) : {};
   const debug = !isCreate ? ((runtimeConfig.debug ?? {}) as Record<string, unknown>) : {};
+  const resourceRuntime = asObject(overlay.runtime.runtimeConfig ?? runtimeConfig);
+  const resourceLimits = asObject(resourceRuntime.resourceLimits);
+  const updateResourceLimit = (key: string, value: number) => mark("runtime", "runtimeConfig", {
+    ...resourceRuntime, resourceLimits: { ...resourceLimits, [key]: Math.max(0, Math.floor(value)) },
+  });
 
   const adapterType = isCreate
     ? props.values.adapterType
@@ -2055,6 +2060,18 @@ export function AgentConfigForm(props: AgentConfigFormProps) {
                   immediate
                   className={inputClass}
                 />
+              </Field>
+              <Field label="Daily spending limit (USD cents)" hint="Blocks new runs at recorded spending. Resets at midnight Asia/Yekaterinburg. Current calls may finish above the limit; this is not a prepaid provider cap. Zero blocks new spending.">
+                <DraftNumberInput value={Number(resourceLimits.dailyCents ?? 0)}
+                  onCommit={(v) => updateResourceLimit("dailyCents", v)} immediate className={inputClass} />
+              </Field>
+              <Field label="Task spending limit (USD cents)" hint="Recorded spending by this agent on one task, across all its runs. The company monthly budget also applies.">
+                <DraftNumberInput value={Number(resourceLimits.taskCents ?? 0)}
+                  onCommit={(v) => updateResourceLimit("taskCents", v)} immediate className={inputClass} />
+              </Field>
+              <Field label="Maximum automatic recovery retries" hint="Caps the scheduler's automatic recovery attempts. An owner may request a new run after resolving the underlying problem.">
+                <DraftNumberInput value={Number(resourceLimits.maxRetries ?? 2)}
+                  onCommit={(v) => updateResourceLimit("maxRetries", v)} immediate className={inputClass} />
               </Field>
               <div className="rounded-md border border-border/70 px-3 py-2">
                 <ToggleField

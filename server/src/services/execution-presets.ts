@@ -123,7 +123,7 @@ export async function prepareExecutionPreset(db: Db, input: {
     });
     environmentId = environment.id;
     return { environmentId, cleanup, adapterConfig: {
-      cwd: "/workspace", command: "opencode", model, instructionsFilePath: "/paperclip/AGENT.md",
+      cwd: "/workspace", command: "opencode", model,
       env: { CODEX_SALE_API_KEY: { type: "secret_ref", secretId: preset.apiKeySecretId, version: "latest" },
         OPENCODE_CONFIG: "/paperclip/.config/opencode/opencode.json" },
     } };

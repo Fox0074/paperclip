@@ -1,0 +1,185 @@
+{
+  "version": 1,
+  "agents": [
+    {
+      "key": "CEO",
+      "name": "AI-CEO",
+      "role": "ceo",
+      "manager": null,
+      "profile": "Strategic",
+      "promptFile": "CEO.md",
+      "limits": {
+        "monthlyCents": 700,
+        "dailyCents": 70,
+        "taskCents": 35,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "CPO",
+      "name": "AI-CPO",
+      "role": "pm",
+      "manager": "CEO",
+      "profile": "Strategic",
+      "promptFile": "CPO.md",
+      "limits": {
+        "monthlyCents": 600,
+        "dailyCents": 60,
+        "taskCents": 30,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "CTO",
+      "name": "AI-CTO",
+      "role": "cto",
+      "manager": "CEO",
+      "profile": "Coding",
+      "promptFile": "CTO.md",
+      "limits": {
+        "monthlyCents": 600,
+        "dailyCents": 60,
+        "taskCents": 30,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "COO",
+      "name": "AI-COO",
+      "role": "general",
+      "manager": "CEO",
+      "profile": "Operational",
+      "promptFile": "COO.md",
+      "limits": {
+        "monthlyCents": 300,
+        "dailyCents": 30,
+        "taskCents": 15,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "CMO",
+      "name": "AI-CMO",
+      "role": "cmo",
+      "manager": "CEO",
+      "profile": "Analytical",
+      "promptFile": "CMO.md",
+      "limits": {
+        "monthlyCents": 400,
+        "dailyCents": 40,
+        "taskCents": 20,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "CFO",
+      "name": "AI-CFO",
+      "role": "cfo",
+      "manager": "CEO",
+      "profile": "Analytical",
+      "promptFile": "CFO.md",
+      "limits": {
+        "monthlyCents": 300,
+        "dailyCents": 30,
+        "taskCents": 15,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "Researcher",
+      "name": "AI-Researcher",
+      "role": "researcher",
+      "manager": "CPO",
+      "profile": "Research",
+      "promptFile": "Researcher.md",
+      "limits": {
+        "monthlyCents": 500,
+        "dailyCents": 50,
+        "taskCents": 25,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "Developer",
+      "name": "AI-Developer",
+      "role": "engineer",
+      "manager": "CTO",
+      "profile": "Coding",
+      "promptFile": "Developer.md",
+      "limits": {
+        "monthlyCents": 700,
+        "dailyCents": 70,
+        "taskCents": 35,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "QA",
+      "name": "AI-QA",
+      "role": "qa",
+      "manager": "CTO",
+      "profile": "Coding",
+      "promptFile": "QA.md",
+      "limits": {
+        "monthlyCents": 400,
+        "dailyCents": 40,
+        "taskCents": 20,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "DevOps",
+      "name": "AI-DevOps",
+      "role": "devops",
+      "manager": "CTO",
+      "profile": "Coding",
+      "promptFile": "DevOps.md",
+      "limits": {
+        "monthlyCents": 200,
+        "dailyCents": 25,
+        "taskCents": 10,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "Designer",
+      "name": "AI-Designer",
+      "role": "designer",
+      "manager": "CPO",
+      "profile": "Creative",
+      "promptFile": "Designer.md",
+      "limits": {
+        "monthlyCents": 200,
+        "dailyCents": 25,
+        "taskCents": 10,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    },
+    {
+      "key": "Growth",
+      "name": "AI-Growth",
+      "role": "general",
+      "manager": "CMO",
+      "profile": "Analytical",
+      "promptFile": "Growth.md",
+      "limits": {
+        "monthlyCents": 100,
+        "dailyCents": 25,
+        "taskCents": 10,
+        "maxRetries": 2,
+        "timeoutSec": 900
+      }
+    }
+  ]
+}

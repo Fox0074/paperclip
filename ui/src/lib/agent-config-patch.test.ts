@@ -4,6 +4,17 @@ import { describe, expect, it } from "vitest";
 import type { Agent } from "@paperclipai/shared";
 import { buildAgentUpdatePatch, type AgentConfigOverlay } from "./agent-config-patch";
 
+it("saves resource limits and heartbeat edits together without losing either", () => {
+  const agent = makeAgent();
+  const patch = buildAgentUpdatePatch(agent, makeOverlay({
+    heartbeat: { intervalSec: 600 },
+    runtime: { runtimeConfig: { ...agent.runtimeConfig, resourceLimits: { dailyCents: 70 } } },
+  }));
+  expect(patch.runtimeConfig).toMatchObject({
+    heartbeat: { intervalSec: 600 }, resourceLimits: { dailyCents: 70 },
+  });
+});
+
 function makeAgent(): Agent {
   return {
     id: "agent-1",

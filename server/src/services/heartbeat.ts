@@ -335,6 +335,7 @@ import { reportRunFailure } from "./run-failure-report.js";
 import { collectRunFailureSecretValues, type RunFailureReportOptions } from "./run-failure-diagnostics.js";
 import { companySkillService } from "./company-skills.js";
 import { budgetService, type BudgetEnforcementScope } from "./budgets.js";
+import { readResourceLimits } from "./agent-resource-limits.js";
 import { secretService, type MissingRuntimeBinding } from "./secrets.js";
 import {
   resolveDefaultAgentWorkspaceDir,
@@ -15319,7 +15320,8 @@ export function heartbeatService(
     const maxAttempts = Math.max(
       0,
       Math.floor(
-        opts?.maxAttempts ?? BOUNDED_TRANSIENT_HEARTBEAT_RETRY_MAX_ATTEMPTS,
+        Math.min(opts?.maxAttempts ?? BOUNDED_TRANSIENT_HEARTBEAT_RETRY_MAX_ATTEMPTS,
+          readResourceLimits(agent.runtimeConfig).maxRetries ?? Number.MAX_SAFE_INTEGER),
       ),
     );
     const consumedAttempts = executionRetryAttemptCount(run, retryReason);

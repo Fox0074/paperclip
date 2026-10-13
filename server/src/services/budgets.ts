@@ -24,6 +24,7 @@ import type {
 } from "@paperclipai/shared";
 import { notFound, unprocessable } from "../errors.js";
 import { logActivity } from "./activity-log.js";
+import { getAgentResourceBlock } from "./agent-resource-limits.js";
 
 type ScopeRecord = {
   companyId: string;
@@ -726,6 +727,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
           pauseReason: agents.pauseReason,
           companyId: agents.companyId,
           name: agents.name,
+            runtimeConfig: agents.runtimeConfig,
         })
         .from(agents)
         .where(eq(agents.id, agentId))
@@ -777,6 +779,13 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             reason: "Company cannot start new work because its budget hard-stop is exceeded.",
           };
         }
+
+        const resourceReason = await getAgentResourceBlock(db, {
+          companyId, agentId, runtimeConfig: agent.runtimeConfig, issueId: context?.issueId,
+        });
+        if (resourceReason) return {
+          scopeType: "agent" as const, scopeId: agentId, scopeName: agent.name, reason: resourceReason,
+        };
       }
 
       if (agent.status === "paused" && agent.pauseReason === "budget") {
