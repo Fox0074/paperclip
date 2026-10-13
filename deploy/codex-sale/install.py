@@ -146,7 +146,7 @@ def save_provider_key(root, key_file=None):
 
 
 def node(root, script):
-    return run("docker", "exec", "-i", root.name, "node", "--import",
+    return run("docker", "exec", "-u", "node", "-i", root.name, "node", "--import",
                "/app/cli/node_modules/tsx/dist/loader.mjs", "--input-type=module", capture=True, input=script)
 
 
@@ -286,7 +286,7 @@ def main():
     if health.get("bootstrapStatus") == "bootstrap_pending":
         invite_file = args.root / "owner-invite.txt"
         if not invite_file.exists() or time.time() - invite_file.stat().st_mtime >= 72 * 3600:
-            result = run("docker", "exec", name, "node", "/app/cli/node_modules/tsx/dist/cli.mjs",
+            result = run("docker", "exec", "-u", "node", name, "node", "/app/cli/node_modules/tsx/dist/cli.mjs",
                          "/app/cli/src/index.ts", "auth", "bootstrap-ceo", "--base-url", url,
                          "--expires-hours", "72", "--force", capture=True)
             clean = re.sub(r"\x1b\[[0-9;]*m", "", result)

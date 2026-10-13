@@ -48,7 +48,7 @@ try {
  console.log(JSON.stringify(ids));
 } finally { await db.$client.end(); }
 """.replace("INPUT", payload)
-    ids = json.loads(run("docker", "exec", "-i", args.container, "node", "--import",
+    ids = json.loads(run("docker", "exec", "-u", "node", "-i", args.container, "node", "--import",
                         "/app/cli/node_modules/tsx/dist/loader.mjs", "--input-type=module", input=script))
     home = root / "agent-data" / "managed" / args.company
     home.mkdir(mode=0o700, exist_ok=True)
