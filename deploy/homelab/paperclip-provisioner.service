@@ -9,6 +9,7 @@ ExecStart=/usr/bin/python3 /opt/paperclip/onboarding/provisioner.py --config /op
 Restart=on-failure
 RuntimeDirectory=paperclip-provisioner
 RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
 UMask=0077
 NoNewPrivileges=true
 PrivateTmp=true
