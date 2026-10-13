@@ -146,7 +146,7 @@ export async function checkExecutionPreset(db: Db, companyId: string, id: string
   if (missing.length) throw unprocessable("A configured model is no longer available from the provider");
   await presetBrokerRequest(preset, "GET", "/health");
   return { adapterType: "opencode_local", status: "pass", testedAt: new Date().toISOString(), checks: [
-    { code: "preset_provider", level: "info", message: "Provider credentials and model catalog verified without an inference call." },
+    { code: "preset_provider", level: "info", message: "Saved company credential resolved and provider model catalog checked. No inference call was made." },
     { code: "preset_runtime", level: "info", message: "Isolated runtime provisioner is ready. A new container will be created when you finish setup." },
   ] };
 }

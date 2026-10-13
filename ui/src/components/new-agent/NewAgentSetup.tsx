@@ -873,7 +873,7 @@ function Setup({
                           </p>
                         )}
                         {executionPreset && <p className="text-sm text-muted-foreground">
-                          Uses the company's saved credential and budget. A separate container and agent home are created when you finish setup.
+                          Uses the company's saved connection and budget. Each agent gets its own environment and memory.
                         </p>}
                         {!executionPreset && aiProviderForAdapter(brandType) && (
                           connection && !aiBinding ? (
