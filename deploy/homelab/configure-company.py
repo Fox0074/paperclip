@@ -34,7 +34,7 @@ def main():
     payload = json.dumps({"company": args.company, "api": key, "ssh": ssh_key})
     script = """
 import {createDb} from '/app/packages/db/src/index.ts';
-import {secretService} from '/app/server/src/services/secrets.ts';
+import {secretService,normalizeSecretKey} from '/app/server/src/services/secrets.ts';
 const input = INPUT;
 const db=createDb('postgres://paperclip:paperclip@127.0.0.1:54329/paperclip');
 try {
@@ -42,7 +42,8 @@ try {
  if(!company) throw Error('Create the company through Paperclip first');
  const svc=secretService(db), ids={};
  for(const [name,value] of [['CODEX_SALE_API_KEY',input.api],['CODEX_SALE_RUNTIME_SSH_KEY',input.ssh]]) {
-  const [existing]=await db.$client`select id from company_secrets where company_id=${company.id} and key=${name} and status='active' and scope='company'`;
+  const existing=await svc.getByKey(company.id,normalizeSecretKey(name));
+  if(existing && existing.status!=='active') throw Error('Activate the existing company credential in Paperclip first');
   ids[name]=existing?.id ?? (await svc.create(company.id,{name,key:name,provider:'local_encrypted',value})).id;
  }
  console.log(JSON.stringify(ids));
