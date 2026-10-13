@@ -133,10 +133,12 @@ export async function prepareExecutionPreset(db: Db, input: {
   }
 }
 
+type PresetSecretOptions = Exclude<NonNullable<Parameters<ReturnType<typeof secretService>["resolveSecretValue"]>[3]>, { consumerType: unknown }>;
+
 export async function checkExecutionPreset(db: Db, companyId: string, id: string,
-  context?: Parameters<ReturnType<typeof secretService>["resolveSecretValue"]>[3]) {
+  context?: PresetSecretOptions["accessContext"]) {
   const preset = await getExecutionPreset(companyId, id);
-  const key = await secretService(db).resolveSecretValue(companyId, preset.apiKeySecretId, "latest", context);
+  const key = await secretService(db).resolveSecretValue(companyId, preset.apiKeySecretId, "latest", { accessContext: context });
   const response = await fetch(`${preset.providerBaseUrl.replace(/\/$/, "")}/models`, {
     headers: { Authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(20_000), redirect: "error",
   });
