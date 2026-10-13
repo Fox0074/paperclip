@@ -15,6 +15,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("company", type=lambda value: str(uuid.UUID(value)))
     parser.add_argument("--root", type=Path, default=Path("/opt/paperclip"))
+    parser.add_argument("--container", default="paperclip")
+    parser.add_argument("--service", default="paperclip-provisioner")
+    parser.add_argument("--agent-image", default="paperclip-agent:codex-sale")
     parser.add_argument("--input-usd-per-million", type=float, required=True)
     parser.add_argument("--output-usd-per-million", type=float, required=True)
     args = parser.parse_args()
@@ -45,7 +48,7 @@ try {
  console.log(JSON.stringify(ids));
 } finally { await db.$client.end(); }
 """.replace("INPUT", payload)
-    ids = json.loads(run("docker", "exec", "-i", "paperclip", "node", "--import",
+    ids = json.loads(run("docker", "exec", "-i", args.container, "node", "--import",
                         "/app/cli/node_modules/tsx/dist/loader.mjs", "--input-type=module", input=script))
     home = root / "agent-data" / "managed" / args.company
     home.mkdir(mode=0o700, exist_ok=True)
@@ -60,8 +63,8 @@ try {
         "npm": "@ai-sdk/openai-compatible", "name": "codex.sale", "options": {
             "baseURL": "https://codex.sale/v1", "apiKey": "{env:CODEX_SALE_API_KEY}"},
         "models": {model: {"name": model, "cost": costs, "limit": {"context": 128000, "output": 16000}}}}}}, indent=2))
-    image = run("docker", "image", "inspect", "paperclip-agent:codex-sale", "--format", "{{.Id}}")
-    networks = json.loads(run("docker", "inspect", "paperclip", "--format", "{{json .NetworkSettings.Networks}}"))
+    image = run("docker", "image", "inspect", args.agent_image, "--format", "{{.Id}}")
+    networks = json.loads(run("docker", "inspect", args.container, "--format", "{{json .NetworkSettings.Networks}}"))
     network = next(iter(networks))
     preset = {"id": "codex-sale", "companyId": args.company, "label": "codex.sale", "adapterType": "opencode_local",
               "defaultModel": "codex_sale/" + model, "models": [{"id": "codex_sale/" + model, "label": model}],
@@ -76,7 +79,7 @@ try {
         data[field] = [entry for entry in data[field] if entry["companyId"] != args.company] + [row]
         # Preserve the inode of bind-mounted presets.json. Operators must not run this concurrently.
         path.write_text(json.dumps(data, indent=2))
-    run("systemctl", "restart", "paperclip-provisioner")
+    run("systemctl", "restart", args.service)
     print("codex.sale configured. No agents, tasks or paid runs were created.")
 
 

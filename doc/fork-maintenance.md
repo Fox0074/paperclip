@@ -18,6 +18,9 @@ The fork contains no company export, mission, old tasks, agent context, host add
 
 ## Fresh installation
 
+For a repeatable installation from a clean clone, use [the installer and Russian guide](../deploy/codex-sale/README.ru.md). The installer also supports a separate test instance and resumable company configuration.
+
+
 Create a new data volume and an empty workspace. Generate a new authentication secret, owner invite, encryption master and runtime SSH key. Do not restore database backups, agent homes or Git worktrees from the retired instance. Create the owner account and company normally. Configure company-scoped API and runtime secrets and the corresponding preset and broker profile. No agents or business tasks are created by this fork.
 
 A retained provider key is an operator secret until it is imported into the newly created company. Never commit it or expose it through the preset API.
