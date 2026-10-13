@@ -76,6 +76,16 @@ function createDbStub(selectResults: SelectResult[]) {
 }
 
 describe("budgetService", () => {
+  it("enforces per-task spending even before a company policy exists", async () => {
+    const stub = createDbStub([
+      [{ companyId: "company-1", name: "Agent", status: "idle", runtimeConfig: { resourceLimits: { taskCents: 10 } } }],
+      [{ name: "Company", status: "active" }],
+      [{ daily: 17, task: 17 }],
+    ]);
+    const block = await budgetService(stub.db as never).getInvocationBlock("company-1", "agent-1", { issueId: "issue-1" });
+    expect(block).toMatchObject({ scopeType: "agent", scopeId: "agent-1", reason: expect.stringContaining("task") });
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

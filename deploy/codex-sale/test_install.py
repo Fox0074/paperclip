@@ -115,6 +115,20 @@ class InstallationBoundaries(unittest.TestCase):
             self.assertTrue(all("companyService" not in call.args[1] for call in node.call_args_list))
             self.assertEqual(manifest["configuredCompanies"], ["company"])
 
+    def test_initial_budget_creates_the_native_hard_stop_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = {"configuredCompanies": []}
+            args = argparse.Namespace(company=None, input_rate=1, output_rate=2, budget_usd=50)
+            responses = [json.dumps([{"id": "company", "name": "Test", "budget_monthly_cents": 0}]),
+                         "", json.dumps({"status": "pass"})]
+            with patch.object(installer, "node", side_effect=responses) as node, \
+                 patch.object(installer, "run"), patch("builtins.print"):
+                installer.configure(root, manifest, args)
+            policy_script = node.call_args_list[1].args[1]
+            self.assertIn("budgetService(db).upsertPolicy", policy_script)
+            self.assertIn("amount:5000", policy_script)
+
     def test_repeat_keeps_an_explicit_unlimited_budget_instead_of_resetting_it(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

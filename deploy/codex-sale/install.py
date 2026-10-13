@@ -196,8 +196,11 @@ await db.$client.end();
             node(root, """
 import {createDb} from '/app/packages/db/src/index.ts';
 import {companyService} from '/app/server/src/services/companies.ts';
+import {budgetService} from '/app/server/src/services/budgets.ts';
 const db=createDb('postgres://paperclip:paperclip@127.0.0.1:54329/paperclip');
 await companyService(db).update(COMPANY,{budgetMonthlyCents:BUDGET});
+await budgetService(db).upsertPolicy(COMPANY,{scopeType:'company',scopeId:COMPANY,
+  amount:BUDGET,windowKind:'calendar_month_utc'},null);
 await db.$client.end();
 """.replace("COMPANY", json.dumps(company["id"])).replace("BUDGET", str(round(args.budget_usd * 100))))
         manifest["configuredCompanies"].append(company["id"])

@@ -727,7 +727,7 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
           pauseReason: agents.pauseReason,
           companyId: agents.companyId,
           name: agents.name,
-            runtimeConfig: agents.runtimeConfig,
+          runtimeConfig: agents.runtimeConfig,
         })
         .from(agents)
         .where(eq(agents.id, agentId))
@@ -756,6 +756,13 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
         };
       }
 
+      const resourceReason = await getAgentResourceBlock(db, {
+        companyId, agentId, runtimeConfig: agent.runtimeConfig, issueId: context?.issueId,
+      });
+      if (resourceReason) return {
+        scopeType: "agent" as const, scopeId: agentId, scopeName: agent.name, reason: resourceReason,
+      };
+
       const companyPolicy = await db
         .select()
         .from(budgetPolicies)
@@ -779,13 +786,6 @@ export function budgetService(db: Db, hooks: BudgetServiceHooks = {}) {
             reason: "Company cannot start new work because its budget hard-stop is exceeded.",
           };
         }
-
-        const resourceReason = await getAgentResourceBlock(db, {
-          companyId, agentId, runtimeConfig: agent.runtimeConfig, issueId: context?.issueId,
-        });
-        if (resourceReason) return {
-          scopeType: "agent" as const, scopeId: agentId, scopeName: agent.name, reason: resourceReason,
-        };
       }
 
       if (agent.status === "paused" && agent.pauseReason === "budget") {

@@ -34,7 +34,7 @@ export async function getAgentResourceBlock(db: Db, input: {
   const limits = readResourceLimits(input.runtimeConfig);
   if (limits.dailyCents === undefined && limits.taskCents === undefined) return null;
   const [row] = await db.select({
-    daily: sql<number>`coalesce(sum(case when ${costEvents.occurredAt} >= ${operationalDayStart()} then ${costEvents.costCents} else 0 end),0)::double precision`,
+    daily: sql<number>`coalesce(sum(case when ${costEvents.occurredAt} >= ${operationalDayStart().toISOString()} then ${costEvents.costCents} else 0 end),0)::double precision`,
     task: input.issueId
       ? sql<number>`coalesce(sum(case when ${costEvents.issueId} = ${input.issueId} then ${costEvents.costCents} else 0 end),0)::double precision`
       : sql<number>`0`,
