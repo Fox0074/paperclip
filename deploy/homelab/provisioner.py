@@ -83,7 +83,7 @@ def provision(profile, value):
         config.mkdir(parents=True)
         (config / "opencode.json").write_bytes(Path(profile["opencodeConfigFile"]).read_bytes())
         (home / "AGENT.md").write_text(
-            f"You are {value['name']}, role {value['role']}. Read /workspace/MISSION.md and /workspace/CURRENT_POLICY.txt. "
+            f"You are {value['name']}, role {value['role']}. Follow the instructions and assignments configured in Paperclip. "
             "Use the Paperclip skill and API for assignment, collaboration and tangible completion. "
             "Protect secrets and respect the shared company budget. Production deployment and external human "
             "outreach require the owner's specific approval.\n"
