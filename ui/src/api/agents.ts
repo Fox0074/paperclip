@@ -152,6 +152,10 @@ export const agentsApi = {
     api.post<Agent>(agentPath(id, companyId, `/config-revisions/${revisionId}/rollback`), {}),
   create: (companyId: string, data: Record<string, unknown>) =>
     api.post<Agent>(`/companies/${companyId}/agents`, data),
+  executionPresets: (companyId: string) =>
+    api.get<import("@paperclipai/shared").ExecutionPreset[]>(`/companies/${companyId}/execution-presets`),
+  testExecutionPreset: (companyId: string, presetId: string) =>
+    api.post<AdapterEnvironmentTestResult>(`/companies/${companyId}/execution-presets/${encodeURIComponent(presetId)}/test`, {}),
   hire: (companyId: string, data: Record<string, unknown>) =>
     api.post<AgentHireResponse>(`/companies/${companyId}/agent-hires`, data),
   update: (id: string, data: Record<string, unknown>, companyId?: string) =>

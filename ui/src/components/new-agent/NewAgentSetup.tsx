@@ -153,7 +153,15 @@ function Setup({
       : undefined,
   );
   const [connection, setConnection] = useState<ProviderConnection | null>(null);
-  const aiBinding = runtimeAiBinding ?? connection?.aiConnection;
+  const [executionPresetId, setExecutionPresetId] = useState("");
+  const executionPresets = useQuery({
+    queryKey: ["execution-presets", companyId],
+    queryFn: () => agentsApi.executionPresets(companyId),
+    enabled: adapterType === "opencode_local",
+    retry: false,
+  });
+  const executionPreset = executionPresets.data?.find(preset => preset.id === executionPresetId);
+  const aiBinding = executionPreset ? undefined : runtimeAiBinding ?? connection?.aiConnection;
   const [repository, setRepository] = useState("");
   const [branch, setBranch] = useState("");
   const [createdInSession, setCreated] = useState<Agent | null>(null);
@@ -217,7 +225,7 @@ function Setup({
   const models = useQuery({
     queryKey: queryKeys.agents.adapterModels(companyId, brandType, null, aiBinding?.provider),
     queryFn: () => agentsApi.adapterModels(companyId, brandType, { provider: aiBinding?.provider }),
-    enabled: Boolean(brandType) && showModel,
+    enabled: Boolean(brandType) && showModel && !executionPreset,
     retry: false,
   });
   const companySecrets = useQuery({
@@ -310,7 +318,7 @@ function Setup({
     );
   const ready = Boolean(
     available &&
-    !environmentError &&
+    (!environmentError || Boolean(executionPreset)) &&
     !envs.isPending &&
     !settings.isPending &&
     !experimental.isPending &&
@@ -429,6 +437,13 @@ function Setup({
     setResult(null);
     setError(null);
     try {
+      if (executionPreset) {
+        const tested = await agentsApi.testExecutionPreset(companyId, executionPreset.id);
+        if (run !== generation.current) return false;
+        setResult(tested);
+        setTestState(tested.status);
+        return tested.status === "pass";
+      }
       const config = await preparedConfig(nextConnection);
       const tested = await testAgentSetup({
         companyId,
@@ -499,14 +514,14 @@ function Setup({
       const leader = existing.find(
         (agent) => agent.role === "ceo" && agent.status !== "terminated",
       );
-      const response = await agentsApi.hire(companyId, {
+      const createData = {
         name: name.trim(),
         appearance: appearanceDraft.appearance,
         role: existing.length ? "general" : "ceo",
         ...(leader ? { reportsTo: leader.id } : {}),
         adapterType,
         adapterConfig: config,
-        defaultEnvironmentId:
+        defaultEnvironmentId: executionPreset ? null :
           environmentOverride ||
           (forced.forced || managedOnly ? environmentId : null),
         runtimeConfig: { ...buildNewAgentRuntimeConfig({ heartbeatEnabled: false }), ...(aiBinding ? { aiConnection: aiBinding } : {}) },
@@ -517,7 +532,10 @@ function Setup({
         ...(connection?.applyStoredClaudeLogin
           ? { applyStoredClaudeLogin: true }
           : {}),
-      });
+      };
+      const response = executionPreset
+        ? { agent: await agentsApi.create(companyId, { ...createData, executionPresetId: executionPreset.id }) }
+        : await agentsApi.hire(companyId, createData);
       hired = true;
       setApiKey("");
       setConnection(null);
@@ -833,7 +851,31 @@ function Setup({
                     <fieldset disabled={busy} className="space-y-8">
                       <section className="space-y-5">
                         <h3 className="text-sm font-semibold">Runtime</h3>
-                        {aiProviderForAdapter(brandType) && (
+                        {adapterType === "opencode_local" && (executionPresets.data?.length ?? 0) > 0 && (
+                          <Field label="Provider setup">
+                            <select aria-label="Provider setup" className={controlClass} value={executionPresetId}
+                              onChange={event => {
+                                const next = executionPresets.data?.find(preset => preset.id === event.target.value);
+                                setExecutionPresetId(event.target.value);
+                                setModel(next?.defaultModel ?? "");
+                                setApiKey(""); setProviderBinding(null); setEnvironmentOverride("");
+                                resetTest();
+                              }}>
+                              <option value="">Other provider connection</option>
+                              {executionPresets.data?.map(preset => <option key={preset.id} value={preset.id}>{preset.label}</option>)}
+                            </select>
+                          </Field>
+                        )}
+                        {adapterType === "opencode_local" && executionPresets.error && (
+                          <p role="alert" className="text-sm text-destructive">
+                            Configured provider settings could not be loaded.
+                            <Button type="button" variant="ghost" onClick={() => void executionPresets.refetch()}>Retry</Button>
+                          </p>
+                        )}
+                        {executionPreset && <p className="text-sm text-muted-foreground">
+                          Uses the company's saved credential and budget. A separate container and agent home are created when you finish setup.
+                        </p>}
+                        {!executionPreset && aiProviderForAdapter(brandType) && (
                           connection && !aiBinding ? (
                             <div className="space-y-3">
                               <p className="text-sm text-muted-foreground">
@@ -848,13 +890,13 @@ function Setup({
                               onChange={binding => { setRuntimeAiBinding(binding); resetTest(); }} />
                           )
                         )}
-                        {models.error && <p role="alert" className="text-sm text-destructive">Could not load models. Retry or enter a model ID manually.</p>}
+                        {!executionPreset && models.error && <p role="alert" className="text-sm text-destructive">Could not load models. Retry or enter a model ID manually.</p>}
                         {((showModel && !usingKimiApi) ||
                           efforts.length > 0) && (
                           <div className="grid items-start gap-5 sm:grid-cols-2">
                             {showModel && !usingKimiApi && (
                               <ModelDropdown
-                                models={models.data ?? []}
+                                models={executionPreset?.models ?? models.data ?? []}
                                 value={model}
                                 onChange={(value) => {
                                   setModel(value);
@@ -881,7 +923,7 @@ function Setup({
                                 onOpenChange={setModelOpen}
                                 allowDefault={!multiProvider}
                                 required={multiProvider}
-                                creatable
+                                creatable={!executionPreset}
                                 groupByProvider={multiProvider}
                               />
                             )}
@@ -912,13 +954,13 @@ function Setup({
                             {SETUP_LOGIN_HINTS[adapterType]}
                           </p>
                         )}
-                        {showModel && models.error && (
+                        {!executionPreset && showModel && models.error && (
                           <p className="text-xs text-muted-foreground">
                             Couldn’t load models. You can enter a model ID
                             manually.
                           </p>
                         )}
-                        {hasCredentialField && !aiBinding && (
+                        {!executionPreset && hasCredentialField && !aiBinding && (
                           <div className="grid gap-5 sm:grid-cols-2">
                             {chooseProvider && (
                               <Field label="API key provider">
@@ -1119,7 +1161,7 @@ function Setup({
                           </div>
                         )}
                       </section>
-                      {!["cursor_cloud", "hermes_gateway"].includes(
+                      {!executionPreset && !["cursor_cloud", "hermes_gateway"].includes(
                         adapterType,
                       ) && (
                         <section className="space-y-5">

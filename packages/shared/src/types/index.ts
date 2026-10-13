@@ -1,4 +1,5 @@
 export { decisionEffectTargetIssueIds } from "./decision.js";
+export type { ExecutionPreset } from "./execution-preset.js";
 export {
   NATIVE_FINALIZATION_SCHEMA,
   type NativeFinalizationResult,

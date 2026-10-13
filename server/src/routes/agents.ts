@@ -1,4 +1,5 @@
 import { connectionIntentService } from "../services/connection-intents.js";
+import { configuredExecutionPresets, publicExecutionPreset, prepareExecutionPreset, checkExecutionPreset } from "../services/execution-presets.js";
 import { completeConnectionIntentSchema } from "@paperclipai/shared";
 import { agentFileStore, agentFileTokenFromHash } from "../services/agent-file-store.js";
 import { pipeline } from "node:stream/promises";
@@ -4772,6 +4773,20 @@ export function agentRoutes(
     res.status(outcome.status).json(outcome.body);
   });
 
+  router.get("/companies/:companyId/execution-presets", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertCompanyAccess(req, companyId);
+    res.json((await configuredExecutionPresets(companyId)).map(publicExecutionPreset));
+  });
+
+  router.post("/companies/:companyId/execution-presets/:presetId/test", async (req, res) => {
+    const companyId = req.params.companyId as string;
+    assertBoard(req);
+    await assertCanCreateAgentsForCompany(req, companyId);
+    res.json(await checkExecutionPreset(db, companyId, req.params.presetId as string,
+      buildActorSecretContext(req, { consumerType: "system", consumerId: "execution-preset-probe" })));
+  });
+
   router.post("/companies/:companyId/agents", validate(createAgentSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     await assertCanCreateAgentsForCompany(req, companyId);
@@ -4804,10 +4819,11 @@ export function agentRoutes(
       // The onboarding marker is not an agent column. The server consumes it to
       // seed the chief-of-staff persona; it never reaches the insert values.
       onboardingFirstAgent: createOnboardingFirstAgent,
+      executionPresetId,
       ...createInput
     } = req.body;
     createInput.adapterType = await assertSelectableAdapterType(createInput.adapterType);
-    const rawCreateAdapterConfig = (createInput.adapterConfig ?? {}) as Record<string, unknown>;
+    let rawCreateAdapterConfig = (createInput.adapterConfig ?? {}) as Record<string, unknown>;
     assertProviderTraceSettingTransition(req, createInput.runtimeConfig);
     await assertFreshPaperclipRunnerProvider(
       companyId,
@@ -4820,6 +4836,19 @@ export function agentRoutes(
     );
     assertNoAgentAdapterConfigMutation(req, rawCreateAdapterConfig);
     const agentId = randomUUID();
+    let preparedPreset: Awaited<ReturnType<typeof prepareExecutionPreset>> | undefined;
+    try {
+    if (executionPresetId) {
+      assertBoard(req);
+      if (createInput.adapterType !== "opencode_local" || createInput.runtimeConfig.aiConnection) {
+        throw unprocessable("Execution presets require OpenCode without a separate AI connection");
+      }
+      preparedPreset = await prepareExecutionPreset(db, { companyId, agentId,
+        presetId: executionPresetId, model: rawCreateAdapterConfig.model,
+        name: createInput.name, role: createInput.role });
+      rawCreateAdapterConfig = preparedPreset.adapterConfig;
+      createInput.defaultEnvironmentId = preparedPreset.environmentId;
+    }
     const requestedAdapterConfig = applyCodexLocalKeyIsolation(
       companyId,
       agentId,
@@ -4940,6 +4969,15 @@ export function agentRoutes(
     }
 
     res.status(201).json(redactAgentRowForResponse(agent));
+    } catch (error) {
+      // Do not tear down a successfully persisted agent when a later audit/response fails.
+      if (preparedPreset && !(await svc.getById(agentId))) {
+        await preparedPreset.cleanup().catch(cleanupError => {
+          console.error("Execution preset cleanup failed", { agentId, error: String(cleanupError) });
+        });
+      }
+      throw error;
+    }
   });
 
   router.patch("/agents/:id/permissions", validate(updateAgentPermissionsSchema), async (req, res) => {

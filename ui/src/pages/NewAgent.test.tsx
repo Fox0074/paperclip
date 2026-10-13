@@ -13,6 +13,9 @@ const api = vi.hoisted(() => ({
   adapterModels: vi.fn(),
   list: vi.fn(),
   hire: vi.fn(),
+  create: vi.fn(),
+  executionPresets: vi.fn(),
+  testExecutionPreset: vi.fn(),
   testEnvironment: vi.fn(),
   getAdapterAuthSignal: vi.fn(),
   getClaudeOAuthTokenStatus: vi.fn(),
@@ -170,6 +173,9 @@ beforeEach(() => {
     "paperclip_runner", "cursor_cloud", "cursor", "gemini_local", "kimi_local", "grok_local", "hermes_local", "hermes_gateway",
   ].map((type) => ({ type, loaded: true, disabled: false }));
   api.adapterModels.mockResolvedValue([]);
+  api.executionPresets.mockResolvedValue([]);
+  api.testExecutionPreset.mockResolvedValue(pass);
+  api.create.mockImplementation(async (_company, input) => ({ ...input, id: "new-agent", status: "idle", urlKey: "atlas" }));
   api.list.mockResolvedValue([{ id: "ceo", role: "ceo", status: "idle" }]);
   api.getAdapterAuthSignal.mockResolvedValue({ status: "present" });
   api.getClaudeOAuthTokenStatus.mockRejectedValue(new ApiError("Not found", 404, null));
@@ -198,6 +204,41 @@ afterEach(async () => {
   container.remove();
 });
 describe("New agent setup", () => {
+  it("creates a configured provider agent without OpenRouter, raw keys, or a reused environment", async () => {
+    api.executionPresets.mockResolvedValue([{ id: "codex-sale", label: "codex.sale", adapterType: "opencode_local",
+      defaultModel: "codex_sale/gpt-6.1-sol", models: [{ id: "codex_sale/gpt-6.1-sol", label: "gpt-6.1-sol" }] }]);
+    await render("opencode_local");
+    const select = container.querySelector('[aria-label="Provider setup"]') as HTMLSelectElement;
+    await act(async () => { select.value = "codex-sale"; select.dispatchEvent(new Event("change", { bubbles: true })); });
+    await settle();
+    expect(container.textContent).not.toContain("Connect another account");
+    expect(container.querySelector('[aria-label="Environment"]')).toBeNull();
+    expect(container.querySelector<HTMLInputElement>('[aria-label="Model"]')!.value).toBe("codex_sale/gpt-6.1-sol");
+    await click("Run test");
+    expect(api.testExecutionPreset).toHaveBeenCalledWith("company-1", "codex-sale");
+    expect(api.testEnvironment).not.toHaveBeenCalled();
+    await click("Finish setup");
+    expect(api.create).toHaveBeenCalledWith("company-1", expect.objectContaining({
+      executionPresetId: "codex-sale", defaultEnvironmentId: null, budgetMonthlyCents: 0,
+      adapterConfig: expect.objectContaining({ model: "codex_sale/gpt-6.1-sol" }),
+    }));
+    expect(api.create.mock.calls[0][1].runtimeConfig.aiConnection).toBeUndefined();
+    expect(api.hire).not.toHaveBeenCalled();
+    expect(managedApi.create).not.toHaveBeenCalled();
+    expect(secrets.create).not.toHaveBeenCalled();
+  });
+
+  it("shows configured provider provisioning failures without reporting successful creation", async () => {
+    api.executionPresets.mockResolvedValue([{ id: "codex-sale", label: "codex.sale", adapterType: "opencode_local",
+      defaultModel: "codex_sale/gpt-6.1-sol", models: [{ id: "codex_sale/gpt-6.1-sol", label: "gpt-6.1-sol" }] }]);
+    api.create.mockRejectedValueOnce(new Error("Isolated runtime provisioning failed"));
+    await render("opencode_local");
+    const select = container.querySelector('[aria-label="Provider setup"]') as HTMLSelectElement;
+    await act(async () => { select.value = "codex-sale"; select.dispatchEvent(new Event("change", { bubbles: true })); });
+    await click("Finish setup");
+    expect(container.textContent).toContain("Isolated runtime provisioning failed");
+    expect(state.navigate).not.toHaveBeenCalled();
+  });
   it.each([false, true])("selects the Grok sandbox before connecting (managed-only=%s)", async (managedOnly) => {
     settings.getExperimental.mockResolvedValue({ enableNativeRunner: true, enableManagedSandboxOnly: managedOnly });
     envApi.list.mockResolvedValue([

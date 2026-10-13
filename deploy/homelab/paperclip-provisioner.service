@@ -1,0 +1,20 @@
+[Unit]
+Description=Paperclip isolated agent container provisioner
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/paperclip/onboarding/provisioner.py --config /opt/paperclip/onboarding/broker.json --socket /run/paperclip-provisioner/control.sock
+Restart=on-failure
+RuntimeDirectory=paperclip-provisioner
+RuntimeDirectoryMode=0755
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/opt/paperclip/agent-data/managed
+
+[Install]
+WantedBy=multi-user.target
