@@ -82,7 +82,7 @@ export function NewAgentSetup() {
     );
   return (
     <Setup
-      key={`${selectedCompanyId}:${params.get("name")}:${params.get("adapterType")}:${params.get("runnerProvider")}`}
+      key={`${selectedCompanyId}:${params.get("name")}:${params.get("adapterType")}:${params.get("runnerProvider")}:${params.get("executionPresetId")}:${params.get("role")}`}
       companyId={selectedCompanyId}
       name={params.get("name") ?? ""}
       adapterType={params.get("adapterType") ?? ""}
