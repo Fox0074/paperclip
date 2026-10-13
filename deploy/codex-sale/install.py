@@ -246,7 +246,7 @@ def main():
     run("docker", "compose", "version", capture=True)
     run("docker", "info", capture=True)
     commit = run("git", "-C", REPO, "rev-parse", "HEAD", capture=True).strip()
-    if run("git", "-C", REPO, "status", "--porcelain", "--untracked-files=no", capture=True).strip():
+    if run("git", "--no-optional-locks", "-C", REPO, "status", "--porcelain", "--untracked-files=no", capture=True).strip():
         parser.error("Use a clean clone with committed source so image versions can be verified")
     if args.configure and not (args.root / MARKER).is_file():
         parser.error("No installer-managed installation exists at this root")
